@@ -42,7 +42,7 @@ class GoogleChatHandler extends AbstractProcessingHandler
         array            $notify_users = [],
         int|string|Level $level = Level::Debug,
         bool             $bubble = true
-    ){
+    ) {
         parent::__construct($level, $bubble);
 
         $this->webhookUrls = $this->parseWebhookUrl($url);
@@ -88,6 +88,16 @@ class GoogleChatHandler extends AbstractProcessingHandler
      */
     protected function getRequestBody(LogRecord $record): array
     {
+        $widgets = [
+            $this->cardWidget(ucwords(config('app.env') ?: 'NA') . ' [Env]', 'BOOKMARK'),
+            $this->cardWidget($this->getLevelContent($record), 'TICKET'),
+            $this->cardWidget($record->datetime, 'CLOCK')
+        ];
+        if (php_sapi_name() != 'cli') {
+            $widgets[] = $this->cardWidget(request()->url(), 'BUS');
+        }
+        $widgets = array_merge($widgets, $this->getCustomLogs());
+
         return [
             'text' => substr($this->getNotifiableText($record->level->value ?? '') . $record->formatted, 0, 4096),
             'cardsV2' => [
@@ -102,13 +112,7 @@ class GoogleChatHandler extends AbstractProcessingHandler
                             'header' => 'Details',
                             'collapsible' => true,
                             'uncollapsibleWidgetsCount' => 3,
-                            'widgets' => [
-                                $this->cardWidget(ucwords(config('app.env') ?: 'NA') . ' [Env]', 'BOOKMARK'),
-                                $this->cardWidget($this->getLevelContent($record), 'TICKET'),
-                                $this->cardWidget($record->datetime, 'CLOCK'),
-                                $this->cardWidget(request()->url(), 'BUS'),
-                                ...$this->getCustomLogs(),
-                            ],
+                            'widgets' => $widgets,
                         ],
                     ],
                 ],
@@ -180,15 +184,18 @@ class GoogleChatHandler extends AbstractProcessingHandler
         }
 
         $allUsers = '';
-        $otherIds = implode(array_map(function ($userId) use (&$allUsers) {
-            if (strtolower($userId) === 'all') {
-                $allUsers = '<users/all> ';
-                return '';
-            }
+        $otherIds = implode(array_map(
+            function ($userId) use (&$allUsers) {
+                if (strtolower($userId) === 'all') {
+                    $allUsers = '<users/all> ';
+                    return '';
+                }
 
-            return "<users/$userId> ";
-        }, array_unique(
-                explode(',', $userIds))
+                return "<users/$userId> ";
+            },
+            array_unique(
+                explode(',', $userIds)
+            )
         ));
 
         return $allUsers . $otherIds;
