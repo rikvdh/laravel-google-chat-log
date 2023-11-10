@@ -79,8 +79,7 @@ class GoogleChatHandler extends AbstractProcessingHandler
 
         curl_setopt_array($ch, $options);
 
-        $ret = \Monolog\Handler\Curl\Util::execute($ch);
-        dump($ret);
+        \Monolog\Handler\Curl\Util::execute($ch);
     }
 
     /**
