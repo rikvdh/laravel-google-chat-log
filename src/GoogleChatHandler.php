@@ -7,15 +7,11 @@ use Illuminate\Support\Facades\Http;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Level;
 use Monolog\LogRecord;
+use Monolog\Utils;
 
 class GoogleChatHandler extends AbstractProcessingHandler
 {
-
-    /**
-     * Google chat channel webhook
-     * @var array
-     */
-    private array $webhookUrls;
+    private string $webhookUrl;
 
     /**
      * Optional user specific notifications configured per log level
@@ -30,40 +26,31 @@ class GoogleChatHandler extends AbstractProcessingHandler
      */
     public static \Closure|null $additionalLogs = null;
 
+    /**
+     * Instance of the GoogleChatRecord util class preparing data for Google Chat API.
+     */
+    private GoogleChatRecord $googleChatRecord;
+
 
     /**
-     * @param string|array $url
+     * @param string $url
      * @param array $notify_users
      * @param int|string|Level $level
      * @param bool $bubble
      */
     public function __construct(
-        string|array     $url,
+        string     $url,
         array            $notify_users = [],
         int|string|Level $level = Level::Debug,
         bool             $bubble = true
     ) {
         parent::__construct($level, $bubble);
 
-        $this->webhookUrls = $this->parseWebhookUrl($url);
+        $this->webhookUrl = $url;
         $this->userNotificationConfig = $notify_users;
-    }
 
-    /**
-     * Parse the webhook URL config value into an array, since multiple comma-separated URLs are supported
-     *
-     * @param string|array $url
-     * @return array
-     */
-    protected function parseWebhookUrl(string|array $url): array
-    {
-        if (is_array($url)) {
-            return $url;
-        }
 
-        return array_map(function ($each) {
-            return trim($each);
-        }, explode(',', $url));
+        $this->googleChatRecord = new GoogleChatRecord();
     }
 
     /**
@@ -75,9 +62,25 @@ class GoogleChatHandler extends AbstractProcessingHandler
      */
     protected function write(LogRecord $record): void
     {
-        foreach ($this->webhookUrls as $url) {
-            Http::post($url, $this->getRequestBody($record));
+        $postData = $this->googleChatRecord->getGoogleChatData($record);
+        $postString = Utils::jsonEncode($postData);
+
+        $ch = curl_init();
+        $options = [
+            CURLOPT_URL => $this->webhookUrl,
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => ['Content-type: application/json'],
+            CURLOPT_POSTFIELDS => $postString,
+        ];
+        if (defined('CURLOPT_SAFE_UPLOAD')) {
+            $options[CURLOPT_SAFE_UPLOAD] = true;
         }
+
+        curl_setopt_array($ch, $options);
+
+        $ret = \Monolog\Handler\Curl\Util::execute($ch);
+        dump($ret);
     }
 
     /**
@@ -86,7 +89,7 @@ class GoogleChatHandler extends AbstractProcessingHandler
      * @param LogRecord $record
      * @return array
      */
-    protected function getRequestBody(LogRecord $record): array
+    private function getRequestBody(LogRecord $record): array
     {
         $widgets = [
             $this->cardWidget(ucwords(config('app.env') ?: 'NA') . ' [Env]', 'BOOKMARK'),
@@ -126,7 +129,7 @@ class GoogleChatHandler extends AbstractProcessingHandler
      * @param LogRecord $record
      * @return string
      */
-    protected function getLevelContent(LogRecord $record): string
+    private function getLevelContent(LogRecord $record): string
     {
         $color = [
             Level::Emergency->value => '#ff1100',
@@ -148,7 +151,7 @@ class GoogleChatHandler extends AbstractProcessingHandler
      * @param $level
      * @return string
      */
-    protected function getNotifiableText($level): string
+    private function getNotifiableText($level): string
     {
         $levelBasedUserIds = [
             Level::Emergency->value => $this->userNotificationConfig['emergency'] ?? '',
@@ -177,7 +180,7 @@ class GoogleChatHandler extends AbstractProcessingHandler
      * @param $userIds
      * @return string
      */
-    protected function constructNotifiableText($userIds): string
+    private function constructNotifiableText($userIds): string
     {
         if (!$userIds) {
             return '';
