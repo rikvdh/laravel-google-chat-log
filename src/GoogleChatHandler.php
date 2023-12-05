@@ -3,7 +3,6 @@
 namespace Enigma;
 
 use Exception;
-use Illuminate\Support\Facades\Http;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Level;
 use Monolog\LogRecord;
@@ -12,12 +11,6 @@ use Monolog\Utils;
 class GoogleChatHandler extends AbstractProcessingHandler
 {
     private string $webhookUrl;
-
-    /**
-     * Optional user specific notifications configured per log level
-     * @var array
-     */
-    private array $userNotificationConfig;
 
     /**
      * Additional logs closure.
@@ -40,16 +33,12 @@ class GoogleChatHandler extends AbstractProcessingHandler
      */
     public function __construct(
         string     $url,
-        array            $notify_users = [],
         int|string|Level $level = Level::Debug,
         bool             $bubble = true
     ) {
         parent::__construct($level, $bubble);
 
         $this->webhookUrl = $url;
-        $this->userNotificationConfig = $notify_users;
-
-
         $this->googleChatRecord = new GoogleChatRecord();
     }
 
@@ -83,127 +72,6 @@ class GoogleChatHandler extends AbstractProcessingHandler
     }
 
     /**
-     * Get the request body content.
-     *
-     * @param LogRecord $record
-     * @return array
-     */
-    private function getRequestBody(LogRecord $record): array
-    {
-        $widgets = [
-            $this->cardWidget(ucwords(config('app.env') ?: 'NA') . ' [Env]', 'BOOKMARK'),
-            $this->cardWidget($this->getLevelContent($record), 'TICKET'),
-            $this->cardWidget($record->datetime, 'CLOCK')
-        ];
-        if (php_sapi_name() != 'cli') {
-            $widgets[] = $this->cardWidget(request()->url(), 'BUS');
-        }
-        $widgets = array_merge($widgets, $this->getCustomLogs());
-
-        return [
-            'text' => substr($this->getNotifiableText($record->level->value ?? '') . $record->formatted, 0, 4096),
-            'cardsV2' => [
-                [
-                    'cardId' => 'info-card-id',
-                    'card' => [
-                        'header' => [
-                            'title' => "{$record->level->name}: {$record->message}",
-                            'subtitle' => config('app.name'),
-                        ],
-                        'sections' => [
-                            'header' => 'Details',
-                            'collapsible' => true,
-                            'uncollapsibleWidgetsCount' => 3,
-                            'widgets' => $widgets,
-                        ],
-                    ],
-                ],
-            ],
-        ];
-    }
-
-    /**
-     * Get the card content.
-     *
-     * @param LogRecord $record
-     * @return string
-     */
-    private function getLevelContent(LogRecord $record): string
-    {
-        $color = [
-            Level::Emergency->value => '#ff1100',
-            Level::Alert->value => '#ff1100',
-            Level::Critical->value => '#ff1100',
-            Level::Error->value => '#ff1100',
-            Level::Warning->value => '#ffc400',
-            Level::Notice->value => '#00aeff',
-            Level::Info->value => '#48d62f',
-            Level::Debug->value => '#000000',
-        ][$record->level->value] ?? '#ff1100';
-
-        return "<font color='{$color}'>{$record->level->name}</font>";
-    }
-
-    /**
-     * Get the text string for notifying the configured user id.
-     *
-     * @param $level
-     * @return string
-     */
-    private function getNotifiableText($level): string
-    {
-        $levelBasedUserIds = [
-            Level::Emergency->value => $this->userNotificationConfig['emergency'] ?? '',
-            Level::Alert->value => $this->userNotificationConfig['alert'] ?? '',
-            Level::Critical->value => $this->userNotificationConfig['critical'] ?? '',
-            Level::Error->value => $this->userNotificationConfig['error'] ?? '',
-            Level::Warning->value => $this->userNotificationConfig['warning'] ?? '',
-            Level::Notice->value => $this->userNotificationConfig['notice'] ?? '',
-            Level::Info->value => $this->userNotificationConfig['info'] ?? '',
-            Level::Debug->value => $this->userNotificationConfig['debug'] ?? '',
-        ][$level] ?? '';
-
-        $levelBasedUserIds = trim($levelBasedUserIds);
-        $userIds = $this->userNotificationConfig['default'] ?? '';
-
-        if ($userIds && $levelBasedUserIds) {
-            $levelBasedUserIds = ",$levelBasedUserIds";
-        }
-
-        return $this->constructNotifiableText(trim($userIds) . $levelBasedUserIds);
-    }
-
-    /**
-     * Get the notifiable text for the given userIds String.
-     *
-     * @param $userIds
-     * @return string
-     */
-    private function constructNotifiableText($userIds): string
-    {
-        if (!$userIds) {
-            return '';
-        }
-
-        $allUsers = '';
-        $otherIds = implode(array_map(
-            function ($userId) use (&$allUsers) {
-                if (strtolower($userId) === 'all') {
-                    $allUsers = '<users/all> ';
-                    return '';
-                }
-
-                return "<users/$userId> ";
-            },
-            array_unique(
-                explode(',', $userIds)
-            )
-        ));
-
-        return $allUsers . $otherIds;
-    }
-
-    /**
      * Card widget content.
      *
      * @return array[]
@@ -212,9 +80,7 @@ class GoogleChatHandler extends AbstractProcessingHandler
     {
         return [
             'decoratedText' => [
-                'startIcon' => [
-                    'knownIcon' => $icon,
-                ],
+                'startIcon' => ['knownIcon' => $icon],
                 'text' => $text,
             ],
         ];

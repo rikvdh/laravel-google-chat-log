@@ -36,11 +36,6 @@ class GoogleChatRecord
     public const COLOR_DEFAULT = '#e3e4e6';
 
     /**
-     * User icon e.g. 'ghost', 'http://example.com/user.png'
-     */
-    private string|null $userIcon;
-
-    /**
      * Whether the message should be added to Google Chat as attachment (plain text otherwise)
      */
     private bool $useAttachment;
@@ -61,8 +56,6 @@ class GoogleChatRecord
      */
     private array $excludeFields;
 
-    private FormatterInterface|null $formatter;
-
     private NormalizerFormatter $normalizerFormatter;
 
     private array $exception = [];
@@ -72,19 +65,15 @@ class GoogleChatRecord
      */
     public function __construct(
         bool $useAttachment = true,
-        ?string $userIcon = null,
         bool $useShortAttachment = false,
         bool $includeContextAndExtra = true,
         array $excludeFields = [],
-        FormatterInterface $formatter = null
     ) {
         $this
             ->useAttachment($useAttachment)
-            ->setUserIcon($userIcon)
             ->useShortAttachment($useShortAttachment)
             ->includeContextAndExtra($includeContextAndExtra)
-            ->excludeFields($excludeFields)
-            ->setFormatter($formatter);
+            ->excludeFields($excludeFields);
 
         if ($this->includeContextAndExtra) {
             $this->normalizerFormatter = new NormalizerFormatter();
@@ -101,12 +90,6 @@ class GoogleChatRecord
     {
         $dataArray = [];
 
-        // if ($this->formatter !== null && !$this->useAttachment) {
-        //     $message = $this->formatter->format($record);
-        // } else {
-        //     $message = $record->message;
-        // }
-        //dump($record);
         $recordData = $this->removeExcludedFields($record);
 
         if ($this->useAttachment) {
@@ -116,13 +99,6 @@ class GoogleChatRecord
                 'uncollapsibleWidgetsCount' => 5,
                 'widgets'    => [],
             ];
-
-            // if ($this->useShortAttachment) {
-            //     $attachment['title'] = $recordData['level_name'];
-            // } else {
-            //     $attachment['title'] = 'Message';
-            //     $attachment['fields'][] = $this->generateAttachmentField('Level', $recordData['level_name']);
-            // }
 
             if ($this->includeContextAndExtra) {
                 foreach (['extra', 'context'] as $key) {
@@ -148,13 +124,7 @@ class GoogleChatRecord
             if (count($attachment['widgets']) > 0) {
                 $dataArray['cardsV2'] = [
                     'cardId' => 'info-card-id',
-                    'card' => [
-                        // 'header' => [
-                        //     'title' => "{$record->level->name}: {$record->message}",
-                        //     'subtitle' => config('app.name'),
-                        // ],
-                        'sections' => $attachment,
-                    ]
+                    'card' => ['sections' => $attachment]
                 ];
             }
         }
@@ -165,14 +135,6 @@ class GoogleChatRecord
             $dataArray['text'] .= ' ' . $e['decoratedText']['text'];
         }
 
-        // if ($this->userIcon !== null) {
-        //     if (false !== ($iconUrl = filter_var($this->userIcon, FILTER_VALIDATE_URL))) {
-        //         $dataArray['icon_url'] = $iconUrl;
-        //     } else {
-        //         $dataArray['icon_emoji'] = ":{$this->userIcon}:";
-        //     }
-        // }
-        //dd($dataArray);
         return $dataArray;
     }
 
@@ -227,20 +189,6 @@ class GoogleChatRecord
     /**
      * @return $this
      */
-    public function setUserIcon(?string $userIcon = null): self
-    {
-        $this->userIcon = $userIcon;
-
-        if (\is_string($userIcon)) {
-            $this->userIcon = trim($userIcon, ':');
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
     public function useShortAttachment(bool $useShortAttachment = false): self
     {
         $this->useShortAttachment = $useShortAttachment;
@@ -274,16 +222,6 @@ class GoogleChatRecord
     }
 
     /**
-     * @return $this
-     */
-    public function setFormatter(?FormatterInterface $formatter = null): self
-    {
-        $this->formatter = $formatter;
-
-        return $this;
-    }
-
-    /**
      * Generates attachment field
      *
      * @param string|mixed[] $value
@@ -309,12 +247,8 @@ class GoogleChatRecord
                 'startIcon' => [
                     'knownIcon' => $this->iconMapping($title),
                 ],
-                // 'endIcon' => [
-                //     'knownIcon' => $this->iconMapping($title),
-                // ],
                 'topLabel' => ucfirst($title),
-                'text' => $value,
-                // 'wrapText' => true,
+                'text' => (string)$value,
             ],
         ];
     }
