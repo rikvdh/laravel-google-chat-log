@@ -274,7 +274,7 @@ class GoogleChatRecord
 
         $fields = [];
         foreach ($normalized as $key => $value) {
-            if ($key == 'exception') {
+            if ($key == 'exception' && is_array($value)) {
                 $this->exception = $value;
                 continue;
             }
