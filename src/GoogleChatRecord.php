@@ -231,7 +231,7 @@ class GoogleChatRecord
     private function generateAttachmentField(string $title, $value): array
     {
 
-        if ($title == 'exception') {
+        if ($title == 'exception' && is_array($value)) {
             $value['file'] = str_replace(base_path() . '/', '', $value['file']);
             foreach ($value['trace'] as $k => $entry) {
                 $value['trace'][$k] = str_replace(base_path() . '/', '', $entry);
