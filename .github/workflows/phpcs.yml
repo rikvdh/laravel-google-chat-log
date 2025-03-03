@@ -1,0 +1,24 @@
+name: PHPCS
+
+on: [ pull_request, push ]
+
+jobs:
+  lint:
+    name: PHPCS
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Composer install
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: 8.3
+
+      - name: Composer install
+        uses: php-actions/composer@v6
+
+      - name: PHP Code Sniffer
+        run: composer phpcs

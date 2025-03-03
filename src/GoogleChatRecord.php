@@ -129,7 +129,7 @@ class GoogleChatRecord
             }
         }
         $dataArray['text'] = '*' . config('app.name') . ' : ' .
-            $record->level->name . ":* {$record->message}";
+            $record->level->name . ':* ' . $record->message;
         if ($this->exception) {
             $e = $this->generateAttachmentField('exception', $this->exception);
             $dataArray['text'] .= ' ' . $e['decoratedText']['text'];
@@ -230,7 +230,6 @@ class GoogleChatRecord
      */
     private function generateAttachmentField(string $title, $value): array
     {
-
         if ($title == 'exception' && is_array($value)) {
             $value['file'] = str_replace(base_path() . '/', '', $value['file']);
             foreach ($value['trace'] as $k => $entry) {

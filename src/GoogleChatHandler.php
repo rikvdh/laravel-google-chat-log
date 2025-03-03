@@ -24,17 +24,15 @@ class GoogleChatHandler extends AbstractProcessingHandler
      */
     private GoogleChatRecord $googleChatRecord;
 
-
     /**
      * @param string $url
-     * @param array $notify_users
      * @param int|string|Level $level
      * @param bool $bubble
      */
     public function __construct(
-        string     $url,
+        string $url,
         int|string|Level $level = Level::Debug,
-        bool             $bubble = true
+        bool $bubble = true
     ) {
         parent::__construct($level, $bubble);
 
@@ -110,13 +108,19 @@ class GoogleChatHandler extends AbstractProcessingHandler
                 try {
                     $value = json_encode($value);
                 } catch (\Throwable $throwable) {
-                    throw new Exception("Additional log key-value should be a string for key[{$key}]. For logging objects, json or array, please stringify by doing json encode or serialize on the value.", 0, $throwable);
+                    throw new Exception(
+                        'Additional log key-value should be a string for key[' . $key .
+                            ']. For logging objects, json or array, please stringify by doing json encode ' .
+                            'or serialize on the value.',
+                        0,
+                        $throwable
+                    );
                 }
             }
 
             if (!is_numeric($key)) {
                 $key = ucwords(str_replace('_', ' ', $key));
-                $value = "<b>{$key}:</b> $value";
+                $value = '<b>' . $key . ':</b> ' . $value;
             }
             $logs[] = $this->cardWidget($value, 'CONFIRMATION_NUMBER_ICON');
         }
