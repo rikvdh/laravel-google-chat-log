@@ -1,0 +1,40 @@
+{
+    "name": "theriddleofenigma/laravel-google-chat-log",
+    "description": "Brings up the option for sending the logs to google chat [Google Workplace formerly called GSuite].",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Kumaravel",
+            "email": "kumarwindows11@gmail.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "monolog/monolog": "^3.0",
+        "illuminate/http": "^9.0|^10.0|^11.0|^12.0",
+        "illuminate/support": "^9.0|^10.0|^11.0|^12.0"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^2.0",
+        "squizlabs/php_codesniffer": "^3.7",
+        "phpcompatibility/php-compatibility": "dev-develop",
+        "phpcsstandards/phpcsextra": "^1.2.0"
+    },
+    "scripts": {
+        "phpcs": "@php vendor/bin/phpcs --standard=phpcs.xml ./src",
+        "phpcbf": "@php vendor/bin/phpcbf --standard=phpcs.xml .",
+        "phpstan": "./vendor/bin/phpstan analyse"
+    },
+    "autoload": {
+        "psr-4": {
+            "Enigma\\": "src/"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
+    }
+}
