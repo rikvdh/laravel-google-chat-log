@@ -139,26 +139,6 @@ class GoogleChatRecord
     }
 
     /**
-     * Returns a Google Chat message attachment color associated with
-     * provided level.
-     */
-    protected function colorText(Level $level, string $text): string
-    {
-        $color = [
-            Level::Emergency->value => '#ff1100',
-            Level::Alert->value => '#ff1100',
-            Level::Critical->value => '#ff1100',
-            Level::Error->value => '#ff1100',
-            Level::Warning->value => '#ffc400',
-            Level::Notice->value => '#00aeff',
-            Level::Info->value => '#48d62f',
-            Level::Debug->value => '#000000',
-        ][$level->value] ?? '#ff1100';
-
-        return '<font color="' . $color . '">' . $text . '</font>';
-    }
-
-    /**
      * Stringifies an array of key/value pairs to be used in attachment fields
      *
      * @param mixed[] $fields
@@ -231,9 +211,12 @@ class GoogleChatRecord
     private function generateAttachmentField(string $title, $value): array
     {
         if ($title == 'exception' && is_array($value)) {
-            $value['file'] = str_replace(base_path() . '/', '', $value['file']);
-            foreach ($value['trace'] as $k => $entry) {
-                $value['trace'][$k] = str_replace(base_path() . '/', '', $entry);
+            $base = base_path();
+            $value['file'] = str_replace($base . '/', '', $value['file']);
+            if (isset($value['trace'])) {
+                foreach ($value['trace'] as $k => $entry) {
+                    $value['trace'][$k] = str_replace($base . '/', '', $entry);
+                }
             }
         }
 
@@ -243,20 +226,11 @@ class GoogleChatRecord
 
         return [
             'decoratedText' => [
-                'startIcon' => [
-                    'knownIcon' => $this->iconMapping($title),
-                ],
+                'startIcon' => ['knownIcon' => 'TICKET'],
                 'topLabel' => ucfirst($title),
                 'text' => (string)$value,
             ],
         ];
-    }
-
-    private function iconMapping($key)
-    {
-        return match ($key) {
-            default => 'TICKET',
-        };
     }
 
     /**
