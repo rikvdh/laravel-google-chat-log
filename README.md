@@ -2,6 +2,8 @@
 
 Brings up the option for sending the logs to Google Chat from [Laravel](https://laravel.com).
 
+Derived from a fork of [theriddleofenigma](https://github.com/theriddleofenigma/laravel-google-chat-log) but with some more QA and some additional features and fixes.
+
 ## Usage
 ### Installation
 ```shell
