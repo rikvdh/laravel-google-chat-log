@@ -1,6 +1,6 @@
 {
-    "name": "theriddleofenigma/laravel-google-chat-log",
-    "description": "Brings up the option for sending the logs to google chat [Google Workplace formerly called GSuite].",
+    "name": "rikvdh/laravel-google-chat-log",
+    "description": "Brings up the option for sending the logs to Google Chat.",
     "license": "MIT",
     "authors": [
         {
@@ -16,7 +16,8 @@
     },
     "require-dev": {
         "phpstan/phpstan": "^2.0",
-        "squizlabs/php_codesniffer": "^3.7",
+        "rector/rector": "^2.5",
+        "squizlabs/php_codesniffer": "^4.0",
         "phpcompatibility/php-compatibility": "dev-develop",
         "phpcsstandards/phpcsextra": "^1.2.0"
     },

@@ -1,13 +1,11 @@
-<p align="center"><code>&hearts; Made with &lt;love/&gt; And I love &lt;code/&gt;</code></p>
-
 # Laravel Google Chat Log
 
-Brings up the option for sending the logs to google chat [Google Workspace formerly called GSuite] from [Laravel](https://laravel.com)/[Lumen](https://lumen.laravel.com).
+Brings up the option for sending the logs to Google Chat from [Laravel](https://laravel.com).
 
 ## Usage
 ### Installation
 ```shell
-composer require theriddleofenigma/laravel-google-chat-log
+composer require rikvdh/laravel-google-chat-log
 ```
 
 ### Configuration
@@ -39,8 +37,8 @@ You can provide the eight logging levels defined in the [RFC 5424 specification]
 
 <b>Note*:</b> Make sure to set the <b>LOG_GOOGLE_CHAT_WEBHOOK_URL</b> env variable. Multiple comma-separated urls are supported.
 
-The optional <b>LOG_GOOGLE_CHAT_NOTIFY_USER_ID_*</b> variables can be used to notify specific users via `@mention`. 
-User Ids mapped under `LOG_GOOGLE_CHAT_NOTIFY_USER_ID_DEFAULT` will be notified for all log levels.  
+The optional <b>LOG_GOOGLE_CHAT_NOTIFY_USER_ID_*</b> variables can be used to notify specific users via `@mention`.
+User Ids mapped under `LOG_GOOGLE_CHAT_NOTIFY_USER_ID_DEFAULT` will be notified for all log levels.
 To get a <b>USER_ID</b>, right-click the user-icon of the person whom you want to notify in the Google chat from your browser window and select inspect. Under the `div` element find the attribute data_member_id, then the USER_ID can be found as `data-member-id="user/human/{USER_ID}>"`.
 In order to notify all the users like `@all`, Set ```LOG_GOOGLE_CHAT_NOTIFY_USER_ID_DEFAULT=all```. Also, you can set multiple USER_IDs as comma separated value.
 In order to notify different users for different log levels, you can set the corresponding env keys mentioned to configure in the `logging.php` file.

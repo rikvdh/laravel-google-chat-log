@@ -13,10 +13,8 @@ declare(strict_types=1);
 
 namespace Enigma;
 
-use Monolog\Level;
 use Monolog\Utils;
 use Monolog\Formatter\NormalizerFormatter;
-use Monolog\Formatter\FormatterInterface;
 use Monolog\LogRecord;
 
 /**
@@ -148,17 +146,14 @@ class GoogleChatRecord
         /** @var array<mixed> $normalized */
         $normalized = $this->normalizerFormatter->normalizeValue($fields);
 
-        $hasSecondDimension = \count(array_filter($normalized, 'is_array')) > 0;
-        $hasOnlyNonNumericKeys = \count(array_filter(array_keys($normalized), 'is_numeric')) === 0;
+        $hasSecondDimension = \count(array_filter($normalized, is_array(...))) > 0;
+        $hasOnlyNonNumericKeys = \count(array_filter(array_keys($normalized), is_numeric(...))) === 0;
 
         return $hasSecondDimension || $hasOnlyNonNumericKeys
             ? Utils::jsonEncode($normalized, JSON_PRETTY_PRINT | Utils::DEFAULT_JSON_FLAGS)
             : Utils::jsonEncode($normalized, Utils::DEFAULT_JSON_FLAGS);
     }
 
-    /**
-     * @return $this
-     */
     public function useAttachment(bool $useAttachment = true): self
     {
         $this->useAttachment = $useAttachment;
@@ -166,9 +161,6 @@ class GoogleChatRecord
         return $this;
     }
 
-    /**
-     * @return $this
-     */
     public function useShortAttachment(bool $useShortAttachment = false): self
     {
         $this->useShortAttachment = $useShortAttachment;
@@ -176,9 +168,6 @@ class GoogleChatRecord
         return $this;
     }
 
-    /**
-     * @return $this
-     */
     public function includeContextAndExtra(bool $includeContextAndExtra = false): self
     {
         $this->includeContextAndExtra = $includeContextAndExtra;
@@ -192,7 +181,6 @@ class GoogleChatRecord
 
     /**
      * @param string[] $excludeFields
-     * @return $this
      */
     public function excludeFields(array $excludeFields = []): self
     {

@@ -2,6 +2,9 @@
 
 namespace Enigma;
 
+use Closure;
+use Monolog\Handler\Curl\Util;
+use Throwable;
 use Exception;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Level;
@@ -10,45 +13,36 @@ use Monolog\Utils;
 
 class GoogleChatHandler extends AbstractProcessingHandler
 {
-    private string $webhookUrl;
-
     /**
      * Additional logs closure.
-     *
-     * @var \Closure|null
      */
-    public static \Closure|null $additionalLogs = null;
+    public static Closure|null $additionalLogs = null;
 
     /**
      * Instance of the GoogleChatRecord util class preparing data for Google Chat API.
      */
-    private GoogleChatRecord $googleChatRecord;
+    private readonly GoogleChatRecord $googleChatRecord;
 
-    /**
-     * @param string $url
-     * @param int|string|Level $level
-     * @param bool $bubble
-     */
     public function __construct(
-        string $url,
+        private readonly ?string $webhookUrl,
         int|string|Level $level = Level::Debug,
         bool $bubble = true
     ) {
         parent::__construct($level, $bubble);
-
-        $this->webhookUrl = $url;
         $this->googleChatRecord = new GoogleChatRecord();
     }
 
     /**
      * Writes the record down to the log of the implementing handler.
      *
-     * @param LogRecord $record
      *
-     * @throws \Exception
+     * @throws Exception
      */
     protected function write(LogRecord $record): void
     {
+        if ($this->webhookUrl === null) {
+            return;
+        }
         $postData = $this->googleChatRecord->getGoogleChatData($record);
         $postString = Utils::jsonEncode($postData);
 
@@ -66,7 +60,7 @@ class GoogleChatHandler extends AbstractProcessingHandler
 
         curl_setopt_array($ch, $options);
 
-        \Monolog\Handler\Curl\Util::execute($ch);
+        Util::execute($ch);
     }
 
     /**
@@ -87,7 +81,6 @@ class GoogleChatHandler extends AbstractProcessingHandler
     /**
      * Get the custom logs.
      *
-     * @return array
      * @throws Exception
      */
     public function getCustomLogs(): array
@@ -107,7 +100,7 @@ class GoogleChatHandler extends AbstractProcessingHandler
             if ($value && !is_string($value)) {
                 try {
                     $value = json_encode($value);
-                } catch (\Throwable $throwable) {
+                } catch (Throwable $throwable) {
                     throw new Exception(
                         'Additional log key-value should be a string for key[' . $key .
                             ']. For logging objects, json or array, please stringify by doing json encode ' .
