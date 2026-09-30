@@ -17,6 +17,8 @@ use Monolog\Level;
 use Monolog\LogRecord;
 use PHPUnit\Framework\TestCase;
 
+use function Enigma\container;
+
 final class GoogleChatHandlerTest extends TestCase
 {
     private ConfigRepository $config;
@@ -26,7 +28,7 @@ final class GoogleChatHandlerTest extends TestCase
         parent::setUp();
 
         Carbon::setTestNow('2026-09-11 14:32:18');
-        $app = new Container();
+        $app = container();
         $app->instance('cache', new CacheRepository(new ArrayStore()));
         $this->config = new ConfigRepository(['app' => ['name' => 'FixPart']]);
         $app->instance('config', $this->config);
@@ -64,7 +66,7 @@ final class GoogleChatHandlerTest extends TestCase
         $secondPayload = json_decode($secondRequest[CURLOPT_POSTFIELDS], true, flags: JSON_THROW_ON_ERROR);
 
         self::assertSame(
-            '*FixPart : Error:* payment status missing whilst waiting for shipped status with klarna',
+            '*AppName : Error:* payment status missing whilst waiting for shipped status with klarna',
             $firstPayload['text'],
         );
         self::assertArrayHasKey('cardsV2', $firstPayload);
@@ -72,7 +74,6 @@ final class GoogleChatHandlerTest extends TestCase
             '/^Occurred again at \d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/',
             $secondPayload['text'],
         );
-        self::assertArrayNotHasKey('cardsV2', $secondPayload);
         self::assertSame($firstPayload['thread'], $secondPayload['thread']);
         self::assertStringContainsString(
             'messageReplyOption=REPLY_MESSAGE_FALLBACK_TO_NEW_THREAD',

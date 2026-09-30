@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Cache;
 use Monolog\Handler\Curl\Util;
 use Throwable;
 use Exception;
+use Illuminate\Support\Facades\Date;
 use Monolog\Handler\AbstractProcessingHandler;
 use Monolog\Level;
 use Monolog\LogRecord;
@@ -54,17 +55,17 @@ class GoogleChatHandler extends AbstractProcessingHandler
                 $cacheKey = 'google-chat-thread:' . hash('md5', $record->message);
                 $newThreadKey = $threadKey . '-' . bin2hex(random_bytes(8));
 
-                if (Cache::add($cacheKey, $newThreadKey, now()->addHour())) {
+                if (Cache::add($cacheKey, $newThreadKey, Date::now()->addHour())) {
                     $threadKey = $newThreadKey;
                 } else {
                     $cachedThreadKey = Cache::get($cacheKey);
 
                     if (is_string($cachedThreadKey)) {
                         $threadKey = $cachedThreadKey;
-                        $postData = ['text' => 'Occurred again at ' . now()->format('Y-m-d H:i:s')];
+                        $postData['text'] = 'Occurred again at ' . Date::now()->format('Y-m-d H:i:s');
                     }
                 }
-            } catch (Throwable) {
+            } catch (Throwable $e) {
                 //
             }
         }

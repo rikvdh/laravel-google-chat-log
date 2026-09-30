@@ -1,0 +1,40 @@
+name: Tests
+
+on:
+  workflow_call:
+
+env:
+  phpversion: 8.5
+  coverage: ${{ (github.event_name == 'pull_request' || github.ref_name == 'develop' || github.ref_name == 'main') && 'true' || 'false' }}
+
+jobs:
+  tests:
+    name: "Unit-tests"
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.phpversion }}
+          tools: composer:v2
+          coverage: ${{ env.coverage == 'true' && 'pcov' || 'none' }}
+
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Composer install
+        uses: php-actions/composer@v6
+
+      - name: Run test suite
+        if: ${{ env.coverage == 'false' }}
+        run: php -d memory_limit=-1 -d zend.enable_gc=0 -d error_reporting=-1 vendor/bin/phpunit --display-incomplete --display-skipped --display-deprecations --display-errors --display-notices --display-warnings
+        env:
+          PHP_VERSION: ${{ env.phpversion }}
+
+      - name: Run test suite with coverage
+        if: ${{ env.coverage == 'true' }}
+        run: php -d memory_limit=-1 -d zend.enable_gc=0 -d error_reporting=-1 vendor/bin/phpunit --coverage-html ./coverage --coverage-text
+        env:
+          PHP_VERSION: ${{ env.phpversion }}
