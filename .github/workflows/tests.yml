@@ -1,7 +1,6 @@
 name: Tests
 
-on:
-  workflow_call:
+on: [ pull_request, push ]
 
 env:
   phpversion: 8.5
